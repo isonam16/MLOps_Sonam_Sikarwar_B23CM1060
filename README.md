@@ -11,11 +11,9 @@ This assignment evaluates deep learning and classical machine learning models un
 ResNet-18, ResNet-50 and Support Vector Machines (SVMs) are compared across hyperparameters, optimizers and compute environments.
 
 ### Experiment Notebooks
-1. **ResNet & SVM Training Notebook:**  
-   [colab](https://colab.research.google.com/drive/1r3A9mhKJ_x7BGhFgBBvxnLyCQTGcD1VC)
+1. **ResNet & SVM Training Notebook:**  [colab](https://colab.research.google.com/drive/1r3A9mhKJ_x7BGhFgBBvxnLyCQTGcD1VC)
 
-2. **Performance differences with CPU and GPU:**  
-   [colab](https://colab.research.google.com/drive/1TYf_4ORdTcpNZbUZxTegk3kxsR6Lrd7r)
+2. **Performance differences with CPU and GPU:**  [colab](https://colab.research.google.com/drive/1TYf_4ORdTcpNZbUZxTegk3kxsR6Lrd7r)
 ---
 
 ## Datasets
@@ -32,14 +30,14 @@ The results reported below are for **10 epochs** with **`pin_memory = True`**.
 
 | Batch Size | Optimizer | Learning Rate | ResNet-18 Acc (%) | ResNet-50 Acc (%) | pin_memory |
 |-----------|----------|---------------|------------------|------------------|-----------|
-| 16 | SGD | 0.001 | 99.38 | 99.55 | True |
-| 16 | SGD | 0.0001 | 98.97 | 99.17 | True |
-| 16 | Adam | 0.001 | 99.68 | 99.88 | True |
-| 16 | Adam | 0.0001 | 99.61 | 99.82 | True |
-| 32 | SGD | 0.001 | 99.36 | 99.36 | True |
-| 32 | SGD | 0.0001 | 99.02 | 98.76 | True |
-| 32 | Adam | 0.001 | 99.74 | 99.74 | True |
-| 32 | Adam | 0.0001 | 99.62 | 99.62 | True |
+| 16 | SGD | 0.001 | 99.38 | 99.05 | True |
+| 16 | SGD | 0.0001 | 98.97 | 99.11 | True |
+| 16 | Adam | 0.001 | 99.18 | 99.20 | True |
+| 16 | Adam | 0.0001 | 99.61 | 99.56 | True |
+| 32 | SGD | 0.001 | 99.36 | 99.59 | True |
+| 32 | SGD | 0.0001 | 99.02 | 99.36 | True |
+| 32 | Adam | 0.001 | 99.74 | 99.61 | True |
+| 32 | Adam | 0.0001 | 99.62 | 99.58 | True |
 
 ---
 
@@ -47,14 +45,42 @@ The results reported below are for **10 epochs** with **`pin_memory = True`**.
 
 | Batch Size | Optimizer | Learning Rate | ResNet-18 Acc (%) | ResNet-50 Acc (%) | pin_memory |
 |-----------|----------|---------------|------------------|------------------|-----------|
-| 16 | SGD | 0.001 | 92.08 | 92.96 | True |
+| 16 | SGD | 0.001 | 92.08 | 90.96 | True |
 | 16 | SGD | 0.0001 | 87.61 | 88.92 | True |
-| 16 | Adam | 0.001 | 93.87 | 95.12 | True |
-| 16 | Adam | 0.0001 | 92.44 | 94.08 | True |
+| 16 | Adam | 0.001 | 93.87 | 91.12 | True |
+| 16 | Adam | 0.0001 | 92.44 | 91.08 | True |
 | 32 | SGD | 0.001 | 91.89 | 92.88 | True |
 | 32 | SGD | 0.0001 | 86.78 | 88.76 | True |
-| 32 | Adam | 0.001 | 91.99 | 95.04 | True |
-| 32 | Adam | 0.0001 | 92.36 | 93.62 | True |
+| 32 | Adam | 0.001 | 91.99 | 92.04 | True |
+| 32 | Adam | 0.0001 | 92.36 | 91.62 | True |
+
+---
+
+### Best Models Summary
+
+#### MNIST
+**Best Model Configuration:**
+- Model: **ResNet-18**
+- Optimizer: **Adam**
+- Learning Rate: **0.001**
+- Batch Size: **32**
+- pin_memory: **True**
+- **Test Accuracy: 99.74%**
+
+This configuration achieved the highest test accuracy among all evaluated MNIST experiments.
+
+---
+
+#### FashionMNIST
+**Best Model Configuration:**
+- Model: **ResNet-18**
+- Optimizer: **Adam**
+- Learning Rate: **0.001**
+- Batch Size: **16**
+- pin_memory: **True**
+- **Test Accuracy: 93.87%**
+
+This configuration achieved the highest test accuracy among all evaluated FashionMNIST experiments.
 
 ---
 
