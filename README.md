@@ -116,13 +116,8 @@ python train.py --no-wandb
 - **Learning Dynamics**: Visualize training progress
 - **Logged to Wandb**: Every 5 epochs
 
-## Expected Results
+## Results
 
-After 30 epochs of training:
-- **Training Accuracy**: ~95-97%
-- **Test Accuracy**: ~92-94%
-- **Training Time**: ~30-45 minutes on GPU
-- **FLOPs**: ~1.1 GFLOPs per image
 
 ## Outputs
 
