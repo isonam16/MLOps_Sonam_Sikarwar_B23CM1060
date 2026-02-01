@@ -38,7 +38,8 @@ Sonam_Sikarwar_B23CM1060_lab2_Worksheet/
 
 1. Clone the repository:
 ```bash
-git clone <https://github.com/isonam16/MLOps_Sonam_Sikarwar_B23CM1060/upload/Sonam_Sikarwar_B23CM1060_lab2_Worksheet>
+git clone -b Sonam_Sikarwar_B23CM1060_lab2_Worksheet \
+  https://github.com/isonam16/MLOps_Sonam_Sikarwar_B23CM1060.git
 cd Sonam_Sikarwar_B23CM1060_lab2_Worksheet
 ```
 
