@@ -3,6 +3,7 @@
 
 This repository contains a complete implementation of a CNN-based image classification system for the CIFAR-10 dataset with comprehensive analysis and visualizations.
 
+**Wandb Dashboard:** [CIFAR-10 Lab 2 Project](https://wandb.ai/acinonyx11ok-indian-institute-of-technology-jodhpur/cifar10-lab2)
 ## Project Overview
 
 This project implements:
