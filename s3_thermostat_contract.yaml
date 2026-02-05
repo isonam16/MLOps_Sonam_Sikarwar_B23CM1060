@@ -1,0 +1,178 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# DATA CONTRACT: Smart Thermostat Fleet Data
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# NEGOTIATION SUMMARY
+# ───────────────────
+# Producer: IoT Device Platform Team (iot-platform@smarthome.com)
+# Consumer: Analytics Platform Team (analytics@smarthome.com)
+#
+# Agreed Terms:
+#   - Temperature range validation to filter out sensor failure values (9999°C)
+#   - Valid temperature range: -30°C to 60°C (covers extreme climates)
+#   - Battery level must be 0.0 to 1.0 (0.0=dead, 1.0=full charge, both valid)
+#   - Hard enforcement to prevent skewed analytics and incorrect averages
+#   - Minute-by-minute streaming from 10,000 device fleet
+#
+# Incident Reference: Sensor failures defaulting to 9999°C broke "Average Home
+#                     Temperature" report by skewing mean calculations
+# Contract Purpose: Filter invalid sensor readings before analytics processing
+# Signed off: IoT Platform Lead + Analytics Team Lead
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+dataContractSpecification: 0.9.3
+id: urn:datacontract:smarthome:thermostat-telemetry
+version: 1.0.0
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# 1. OWNERSHIP & GOVERNANCE
+# ───────────────────────────────────────────────────────────────────────────
+info:
+  title: "Smart Thermostat Fleet Telemetry"
+  description: |
+    Temperature and battery telemetry from deployed smart thermostat devices.
+    Data collected every minute from a fleet of 10,000 devices.
+    Primary use: Home temperature analytics, energy efficiency reporting,
+    battery health monitoring, and predictive maintenance.
+    CRITICAL: Invalid sensor readings (9999°C) must be filtered to prevent
+    analytics corruption.
+  owner: "IoT Device Platform Team"
+  contact:
+    name: "IoT Data Engineer"
+    email: "iot-data@smarthome.com"
+    slack: "#iot-platform"
+  classification: internal
+  tags: [iot, telemetry, sensors, temperature, smart-home]
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# 2. SCHEMA DEFINITION (Logical Contract)
+# ───────────────────────────────────────────────────────────────────────────
+schema:
+  type: object
+  properties:
+
+    device_id:
+      type: string
+      description: |
+        Unique identifier for the thermostat device.
+        Format: Alphanumeric string (e.g., 'xyz').
+      # physical_mapping: dev_id
+
+    temperature_celsius:
+      type: number
+      minimum: -30
+      maximum: 60
+      description: |
+        Ambient temperature reading in degrees Celsius.
+        Valid range: -30°C to 60°C (inclusive).
+        Readings outside this range indicate sensor failure or calibration loss.
+        Note: Sensor default failure value is 9999°C and must be rejected.
+      # physical_mapping: temp_c
+
+    battery_level:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: |
+        Battery charge level as a decimal fraction.
+        Valid range: 0.0 to 1.0 (inclusive).
+        0.0 = completely depleted (dead battery)
+        1.0 = fully charged
+        Readings outside this range indicate sensor malfunction.
+      # physical_mapping: batt_lvl
+
+  required:
+    - device_id
+    - temperature_celsius
+    - battery_level
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# 3. SERVICE LEVEL AGREEMENTS (SLAs)
+# ───────────────────────────────────────────────────────────────────────────
+sla:
+  freshness:
+    threshold: "2 minutes"
+    description: "Data arrives every minute; 2-minute threshold allows network delays"
+  availability:
+    percentage: "99.5%"
+    description: "High availability for continuous monitoring"
+  retention:
+    period: "1 year"
+    description: "Historical data for seasonal energy analysis"
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# 4. DATA QUALITY RULES
+# ───────────────────────────────────────────────────────────────────────────
+quality:
+
+  # Rule 1: Temperature range validation (CRITICAL)
+  - name: temperature_valid_range
+    type: validity
+    expression: "temperature_celsius >= -30 AND temperature_celsius <= 60"
+    threshold: "100%"
+    enforcement: hard
+    description: |
+      Temperature must be within realistic range: -30°C to 60°C (inclusive).
+      CIRCUIT BREAKER: Rejects sensor failure values (9999°C) and calibration errors.
+      Prevents skewed averages in analytics reports.
+
+  # Rule 2: Battery level valid range
+  - name: battery_level_valid_range
+    type: validity
+    expression: "battery_level >= 0.0 AND battery_level <= 1.0"
+    threshold: "100%"
+    enforcement: hard
+    description: |
+      Battery level must be between 0.0 and 1.0 (inclusive).
+      Boundary values (0.0 for dead, 1.0 for full) are valid.
+      Readings outside range (e.g., 1.5, -0.2) indicate sensor malfunction.
+
+  # Rule 3: Temperature completeness
+  - name: temperature_not_null
+    type: completeness
+    column: temperature_celsius
+    threshold: "100%"
+    enforcement: hard
+    description: "Temperature reading is required for all telemetry records"
+
+  # Rule 4: Battery level completeness
+  - name: battery_level_not_null
+    type: completeness
+    column: battery_level
+    threshold: "100%"
+    enforcement: hard
+    description: "Battery level is required for device health monitoring"
+
+  # Rule 5: Device ID completeness
+  - name: device_id_not_null
+    type: completeness
+    column: device_id
+    threshold: "100%"
+    enforcement: hard
+    description: "Device identifier required to track individual thermostats"
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# 5. LINEAGE & CONSUMERS
+# ───────────────────────────────────────────────────────────────────────────
+lineage:
+  sources:
+    - name: thermostat_mqtt_stream
+      type: mqtt
+      topic: devices/thermostat/telemetry
+      description: "Real-time MQTT stream from smart thermostat fleet"
+  consumers:
+    - name: home-temperature-analytics
+      team: analytics-platform
+      usage: "Average home temperature reporting and trend analysis"
+    - name: predictive-maintenance
+      team: device-operations
+      usage: "Battery health monitoring and replacement scheduling"
+    - name: energy-efficiency-dashboard
+      team: product-analytics
+      usage: "Customer energy usage insights and recommendations"
