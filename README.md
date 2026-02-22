@@ -1,4 +1,4 @@
-## 🤗 Hugging Face Model
+## 🤗 Hugging Face Link
 
 [distilbert-reviews-genres on Hugging Face](https://huggingface.co/isonam16/distilbert-reviews-genres)
 
