@@ -1,6 +1,6 @@
 ## 🤗 Hugging Face Link
 
-[distilbert-reviews-genres on Hugging Face](https://huggingface.co/isonam16/distilbert-reviews-genres)
+[distilbert-reviews-genres on Hugging Face](https://huggingface.co/acinonyxxx/distilbert-reviews-genres)
 
 ---
 
