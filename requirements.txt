@@ -1,0 +1,8 @@
+transformers
+datasets
+evaluate
+scikit-learn
+pandas
+numpy
+huggingface_hub
+accelerate>=1.1.0
