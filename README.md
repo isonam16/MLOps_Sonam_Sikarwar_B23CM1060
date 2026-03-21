@@ -13,14 +13,14 @@ This assignment optimizes a custom **PyTorch Transformer** model for **English-t
 
 
 ## Repository Structure
-
+'''
 Assignment-4/
-  │
-  ├── b23cm1060_ass_4_tuned_en_to_hi.ipynb   # Ray Tune + Optuna training notebook
-  ├── b23cm1060-baseline.ipynb               # Baseline training notebook
-  ├── b23cm1060_ass_4_report.pdf             # report
-  └── README.md
-
+│
+├── b23cm1060_ass_4_tuned_en_to_hi.ipynb   # Ray Tune + Optuna training notebook
+├── b23cm1060-baseline.ipynb               # Baseline training notebook
+├── b23cm1060_ass_4_report.pdf             # report
+└── README.md
+'''
 
 ## Results at a Glance
 
