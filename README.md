@@ -95,8 +95,7 @@ The baseline model was trained for **100 epochs** with the following fixed hyper
 Retrained with best config for **30 epochs**:
 - **Training Time:** 25.3 minutes  
 - **Final Loss:** 0.1082  
-- **BLEU Score:** 90.38 ✅
-
+- **BLEU Score:** 90.38 
 
 
 ## Model Weights
