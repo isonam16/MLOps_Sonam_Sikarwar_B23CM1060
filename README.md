@@ -16,12 +16,10 @@ This assignment optimizes a custom **PyTorch Transformer** model for **English-t
 
 Assignment-4/
 │
-├── B23CM1060_ass_4_tuned_en_to_hi.ipynb   # Ray Tune + Optuna training notebook
-├── en_to_hi.ipynb                          # Baseline training notebook
-├── B23CM1060_ass_4_report.pdf             # 2-page report
-├── B23CM1060_best_model.pth               # Best model weights (also on HuggingFace)
+├── b23cm1060_ass_4_tuned_en_to_hi.ipynb   # Ray Tune + Optuna training notebook
+├── b23cm1060-baseline.ipynb               # Baseline training notebook
+├── b23cm1060_ass_4_report.pdf             # report
 └── README.md
-
 
 
 ## Results at a Glance
