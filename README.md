@@ -1,21 +1,19 @@
-# ML-DL-Ops Assignment 4 — Optimizing Transformer Translation with Ray Tune & Optuna
+# ML-DL-Ops Assignment 4 : Optimizing Transformer Translation with Ray Tune & Optuna
 
 **Sonam Sikarwar | B23CM1060**
 
 [![HuggingFace Model](https://img.shields.io/badge/HuggingFace-Model-yellow?logo=huggingface)](https://huggingface.co/acinonyxxx/B23CM1060_best_model_ml-dl-ops_assignment_4/tree/main)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/isonam16/MLOps_Sonam_Sikarwar_B23CM1060/tree/Assignment-4)
 
----
+
 
 ## Overview
 
 This assignment optimizes a custom **PyTorch Transformer** model for **English-to-Hindi translation** using **Ray Tune** paired with the **Optuna** search algorithm. The goal was to match or exceed the baseline BLEU score in significantly fewer epochs by finding an optimal hyperparameter configuration.
 
----
+
 
 ## Repository Structure
 
-```
 Assignment-4/
 │
 ├── B23CM1060_ass_4_tuned_en_to_hi.ipynb   # Ray Tune + Optuna training notebook
@@ -23,9 +21,8 @@ Assignment-4/
 ├── B23CM1060_ass_4_report.pdf             # 2-page report
 ├── B23CM1060_best_model.pth               # Best model weights (also on HuggingFace)
 └── README.md
-```
 
----
+
 
 ## Results at a Glance
 
@@ -36,7 +33,7 @@ Assignment-4/
 | BLEU Score | 71.47 | **90.38** | **+18.91 pts** |
 | Epochs Used | 100 | 30 | **70% fewer** |
 
----
+
 
 ## Part 1 — Baseline
 
@@ -56,7 +53,7 @@ The baseline model was trained for **100 epochs** with the following fixed hyper
 - **Final Loss:** 0.0992  
 - **BLEU Score:** 71.47
 
----
+
 
 ## Part 2 — Ray Tune + Optuna Setup
 
@@ -81,7 +78,7 @@ The baseline model was trained for **100 epochs** with the following fixed hyper
 
 **20 trials** were run, each capped at **30 epochs**. Total sweep time: **103.9 minutes**.
 
----
+
 
 ## Part 3 — Best Configuration
 
@@ -101,7 +98,7 @@ Retrained with best config for **30 epochs**:
 - **Final Loss:** 0.1082  
 - **BLEU Score:** 90.38 ✅
 
----
+
 
 ## Model Weights
 
