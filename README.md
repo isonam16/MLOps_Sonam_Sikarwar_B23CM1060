@@ -2,16 +2,10 @@
 
 **Sonam Sikarwar (B23CM1060)**
 
----
-
 ## Project Links
 
 * Weights & Biases Dashboard: https://wandb.ai/acinonyx11ok-indian-institute-of-technology-jodhpur/mlops-vit_lora
 * Hugging Face Model: https://huggingface.co/acinonyxxx/vit_lora
-
----
-
-
 
 # Overview
 
@@ -20,7 +14,16 @@ This assignment explores:
 1. **Parameter-efficient fine-tuning (LoRA) on Vision Transformers**
 2. **Adversarial robustness and detection on CNN models**
 
----
+# Repository Structure
+
+```bash
+.
+├── Dockerfile
+├── README.md
+├── b23cm1060_Sonam_Sikarwar_Ass5.pdf
+├── q1_vit_lora_optuna.py
+└── q2_adversarial_attacks_detection.py
+```
 
 # Part 1: ViT Fine-tuning with LoRA
 
@@ -33,8 +36,6 @@ This assignment explores:
   * Head-only fine-tuning (baseline)
   * LoRA applied to attention (qkv layers)
   * Hyperparameter tuning using grid search (r, α)
-
----
 
 ## Best Model (LoRA: Rank=8, Alpha=8)
 
@@ -53,7 +54,6 @@ This assignment explores:
 | 9     | 0.0211     | 0.3933   | 99.72     | 90.04   |
 | 10    | 0.0187     | 0.3941   | 99.79     | 90.01   |
 
----
 
 ## Final Results (All Configurations)
 
@@ -70,7 +70,6 @@ This assignment explores:
 | Yes  | 8    | 4     | 0.1     | 90.06     | 185K   |
 | Yes  | 8    | 8     | 0.1     | **90.15** | 185K   |
 
----
 
 ## Observations
 
@@ -79,7 +78,6 @@ This assignment explores:
 * Optimal balance achieved at **r=8, α=8**
 * Very high training accuracy indicates slight overfitting
 
----
 
 #  Part 2: Adversarial Attacks & Detection
 
@@ -93,7 +91,6 @@ This assignment explores:
 
 **Observation:** Accuracy drops significantly under attack. Scratch FGSM is stronger due to normalization differences.
 
----
 
 ## Perturbation vs Accuracy
 
@@ -105,8 +102,6 @@ This assignment explores:
 
 **Observation:** Increasing perturbation strength → drastic accuracy drop.
 
----
-
 ## Adversarial Detection
 
 | Attack | Detection Accuracy |
@@ -116,8 +111,6 @@ This assignment explores:
 
 **Observation:** Detector achieves very high accuracy since adversarial patterns are distinguishable using frequency + edge features.
 
----
-
 # Key Takeaways
 
 * LoRA enables efficient fine-tuning with fewer parameters
@@ -125,7 +118,6 @@ This assignment explores:
 * Detection models can effectively identify adversarial inputs
 * Strong attacks (PGD/BIM) produce structured perturbations that are learnable
 
----
 
 # Conclusion
 
