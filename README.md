@@ -27,28 +27,28 @@ This assignment explores:
 ```
 # Setup & Usage
 
-# 1. Clone Repository
+## 1. Clone Repository
 ```bash
 git clone https://github.com/<your-username>/ML-DL-Ops-Assignment-5.git
 cd ML-DL-Ops-Assignment-5
 ```
-# Build Docker Image and run container
+## Build Docker Image and run container
 ```bash
 docker build -t mlops-assignment5 .
 docker run -it --rm mlops-assignment5
 ```
-# Create Virtual Environment
+## Create Virtual Environment
 ```bash
 python -m venv venv
 ```
-# Create Virtual Environment
+## Create Virtual Environment
 ```bash
 python -m venv venv
 source venv/bin/activate      # Linux / Mac
 venv\Scripts\activate         # Windows
 pip install -r requirements.txt
 ```
-# Run Experiments
+## Run Experiments
 ```bash
 # Part 1: ViT + LoRA Training
 python q1_vit_lora_optuna.py
