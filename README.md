@@ -25,39 +25,37 @@ This assignment explores:
 ├── q1_vit_lora_optuna.py
 └── q2_adversarial_attacks_detection.py
 ```
-
 # Setup & Usage
 
-## 1. Clone Repository
+# 1. Clone Repository
+```bash
 git clone https://github.com/<your-username>/ML-DL-Ops-Assignment-5.git
 cd ML-DL-Ops-Assignment-5
-
-## 2. Using Docker (Recommended)
-# Build Docker Image
+```
+# Build Docker Image and run container
+```bash
 docker build -t mlops-assignment5 .
-
-# Run Container
 docker run -it --rm mlops-assignment5
-
-## 3. Using Local Environment
+```
 # Create Virtual Environment
+```bash
 python -m venv venv
-
-# Activate Environment
+```
+# Create Virtual Environment
+```bash
+python -m venv venv
 source venv/bin/activate      # Linux / Mac
 venv\Scripts\activate         # Windows
-
-# Install Dependencies
 pip install -r requirements.txt
-
-## 4. Run Experiments
-
+```
+# Run Experiments
+```bash
 # Part 1: ViT + LoRA Training
 python q1_vit_lora_optuna.py
 
 # Part 2: Adversarial Attacks & Detection
 python q2_adversarial_attacks_detection.py
-
+```
 # Part 1: ViT Fine-tuning with LoRA
 
 ## Approach
