@@ -1,0 +1,606 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Upload, X, Terminal, Move } from "lucide-react";
+import SystemUsageChart from "./SystemUsageChart";
+import WorkflowGraph from "./WorkflowGraph";
+import * as api from '../services/features';
+
+// Random blob paths normalized for objectBoundingBox (0..1)
+const BLOB_PATHS = [
+  "M0.5,0.1 C0.75,0.1,0.9,0.3,0.9,0.5 C0.9,0.7,0.7,0.95,0.5,0.95 C0.3,0.95,0.1,0.7,0.1,0.5 C0.1,0.3,0.25,0.1,0.5,0.1 Z",
+  "M0.45,0.1 C0.7,0.05,0.9,0.25,0.9,0.55 C0.9,0.8,0.65,0.95,0.4,0.9 C0.2,0.85,0.05,0.6,0.1,0.35 C0.15,0.15,0.3,0.1,0.45,0.1 Z",
+  "M0.5,0.05 C0.8,0.05,0.95,0.3,0.85,0.6 C0.75,0.9,0.5,0.95,0.35,0.85 C0.1,0.7,0.05,0.4,0.2,0.15 C0.3,0.05,0.4,0.05,0.5,0.05 Z",
+];
+
+interface BlobDef {
+  id: string;
+  path: string;
+  transform: string; // SVG transform for the path
+  offset: { x: number; y: number }; // UI drag offset
+}
+
+const ImageAnalyzer: React.FC = () => {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedMask, setSelectedMask] = useState<string | null>(null);
+  const [backendImageName, setBackendImageName] = useState<string | null>(null);
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [showingResult, setShowingResult] = useState<boolean>(true);
+  const [mimeType, setMimeType] = useState<string>("");
+  const [logs, setLogs] = useState<string[]>([]);
+  const [maskingStatus, setMaskingStatus] = useState<
+    "idle" | "processing" | "done"
+  >("idle");
+  const [isProcessingAction, setIsProcessingAction] = useState<boolean>(false);
+  const [selectedAction, setSelectedAction] = useState<
+    "move" | "inpaint" | "erase" | null
+  >(null);
+  const [imgAspectRatio, setImgAspectRatio] = useState<number | undefined>(
+    undefined
+  );
+
+  // Multi-blob state
+  const [maskBlobs, setMaskBlobs] = useState<BlobDef[]>([]);
+
+  // Drag State
+  const [draggingBlobId, setDraggingBlobId] = useState<string | null>(null);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const maskInputRef = useRef<HTMLInputElement>(null);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  // Global mouse listeners for dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!draggingBlobId) return;
+
+      const deltaX = e.clientX - dragStartRef.current.x;
+      const deltaY = e.clientY - dragStartRef.current.y;
+
+      setMaskBlobs((prev) =>
+        prev.map((blob) => {
+          if (blob.id === draggingBlobId) {
+            return {
+              ...blob,
+              offset: {
+                x: blob.offset.x + deltaX,
+                y: blob.offset.y + deltaY,
+              },
+            };
+          }
+          return blob;
+        })
+      );
+
+      // Reset drag start to current to avoid accumulating large deltas
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseUp = () => {
+      setDraggingBlobId(null);
+    };
+
+    if (draggingBlobId) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [draggingBlobId]);
+
+  const addLog = (message: string) => {
+    setLogs((prev) => [
+      ...prev,
+      `[${new Date().toLocaleTimeString()}] ${message}`,
+    ]);
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setMimeType(file.type);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result as string;
+        setSelectedImage(dataUrl);
+        setResultImage(null);
+        setLogs([]);
+        setMaskingStatus("idle");
+        setSelectedAction(null);
+        setMaskBlobs([]);
+        setSelectedMask(null);
+        setImgAspectRatio(undefined);
+        addLog(`Image loaded: ${file.name}`);
+        
+        // Upload to backend
+        addLog("Uploading image to backend...");
+        const base64Data = dataUrl.split(",")[1];
+        const response = await api.setImage(base64Data);
+        
+        if (response.success && response.data) {
+          setBackendImageName(response.data.image_name);
+          addLog(`✓ Image uploaded: ${response.data.image_name}`);
+          addLog(`Dimensions: ${response.data.width}x${response.data.height}`);
+          addLog("Upload a mask image or simulate masking.");
+        } else {
+          addLog(`✗ Upload failed: ${response.error || 'Unknown error'}`);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleMaskChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSelectedMask(e.target?.result as string);
+        setMaskingStatus("done");
+        setMaskBlobs([]); // Clear simulated blobs
+        addLog(`Mask image uploaded: ${file.name}`);
+        addLog("Mask ready. Select an action (move/inpaint/erase).");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const simulateMasking = () => {
+    setMaskingStatus("processing");
+    addLog("Initiating semantic mask generation...");
+
+    setTimeout(() => {
+      setMaskingStatus("done");
+
+      // Generate 2 to 4 random blobs
+      const count = Math.floor(Math.random() * 3) + 2;
+      const newBlobs: BlobDef[] = [];
+
+      // Define simple quadrants to avoid total overlap (2x2 grid)
+      const quadrants = [
+        { x: 0, y: 0 },
+        { x: 0.5, y: 0 },
+        { x: 0, y: 0.5 },
+        { x: 0.5, y: 0.5 },
+      ];
+
+      // Shuffle quadrants
+      const shuffledQuads = quadrants.sort(() => 0.5 - Math.random());
+
+      for (let i = 0; i < count; i++) {
+        const quad = shuffledQuads[i % 4];
+        const path = BLOB_PATHS[Math.floor(Math.random() * BLOB_PATHS.length)];
+
+        // Randomize position within quadrant
+        const scale = 0.25 + Math.random() * 0.15; // 0.25 to 0.4
+        const offsetX = quad.x + Math.random() * 0.1;
+        const offsetY = quad.y + Math.random() * 0.1;
+
+        newBlobs.push({
+          id: `blob-${i}-${Date.now()}`,
+          path,
+          transform: `translate(${offsetX}, ${offsetY}) scale(${scale})`,
+          offset: { x: 0, y: 0 },
+        });
+      }
+
+      setMaskBlobs(newBlobs);
+      addLog(
+        `Segmentation complete. Detected ${count} distinct independent regions.`
+      );
+    }, 2000);
+  };
+
+  const handleActionClick = (action: "move" | "inpaint" | "erase") => {
+    if (!selectedImage) return;
+
+    setSelectedAction(action);
+
+    // Reset offsets when switching back to move (optional, but cleaner)
+    if (action !== "move") {
+      setMaskBlobs((prev) =>
+        prev.map((b) => ({ ...b, offset: { x: 0, y: 0 } }))
+      );
+    }
+
+    if (action === "move") {
+      addLog(
+        "Independent object manipulation enabled. Drag any highlighted object."
+      );
+    } else if (action === "inpaint") {
+      addLog("Masked regions selected for inpainting analysis.");
+    } else if (action === "erase") {
+      addLog("Masked regions selected for removal.");
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent, blobId: string) => {
+    if (selectedAction !== "move") return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    setDraggingBlobId(blobId);
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const confirmAction = () => {
+    if (selectedAction) {
+      executeAnalysis(selectedAction);
+    }
+  };
+
+  const executeAnalysis = async (action: "move" | "inpaint" | "erase") => {
+    if (!selectedImage || !backendImageName) {
+      addLog("✗ Error: Image not uploaded to backend");
+      return;
+    }
+
+    setIsProcessingAction(true);
+    addLog(`Executing ${action.toUpperCase()} pipeline...`);
+
+    try {
+      let response;
+      
+      switch (action) {
+        case "move":
+          const movedBlobs = maskBlobs.filter(
+            (b) => b.offset.x !== 0 || b.offset.y !== 0
+          );
+          
+          if (movedBlobs.length === 0) {
+            addLog("✗ No objects moved. Please drag objects before confirming.");
+            setIsProcessingAction(false);
+            return;
+          }
+          
+          // Use first moved blob's offset as reference
+          const blob = movedBlobs[0];
+          const startx = 0;
+          const starty = 0;
+          const endx = Math.round(blob.offset.x);
+          const endy = Math.round(blob.offset.y);
+          
+          addLog(`Moving object: (${startx},${starty}) → (${endx},${endy})`);
+          response = await api.move(backendImageName, [0], startx, starty, endx, endy);
+          break;
+          
+        case "inpaint":
+          addLog("Requesting inpainting with FREE model...");
+          response = await api.inpaint(backendImageName, [0], "Fill the masked region naturally", "FREE");
+          break;
+          
+        case "erase":
+          addLog("Requesting object removal...");
+          response = await api.erase(backendImageName, [0]);
+          break;
+          
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
+
+      if (response.success && response.data) {
+        addLog(`✓ ${action.toUpperCase()} completed: ${response.data.message}`);
+        
+        // Display result image
+        if (response.data.image) {
+          const resultDataUrl = `data:image/png;base64,${response.data.image}`;
+          setResultImage(resultDataUrl);
+          setShowingResult(true);
+          addLog("✓ Result image received. Displaying...");
+        }
+      } else {
+        addLog(`✗ ${action.toUpperCase()} failed: ${response.error || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      addLog(`✗ Critical error: ${error.message}`);
+      console.error(error);
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setSelectedMask(null);
+    setResultImage(null);
+    setBackendImageName(null);
+    setLogs([]);
+    setMimeType("");
+    setMaskingStatus("idle");
+    setSelectedAction(null);
+    setMaskBlobs([]);
+    setImgAspectRatio(undefined);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    if (maskInputRef.current) {
+      maskInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="flex flex-row h-full gap-6">
+      {/* LEFT COLUMN: Visuals + Data */}
+      <div className="flex-1 flex flex-col min-w-0 gap-6">
+        {/* Image Area */}
+        <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl relative overflow-hidden group select-none flex items-center justify-center p-4">
+          {/* SVG Defs for Masking - Dynamic generation for each blob */}
+          <svg className="absolute w-0 h-0 pointer-events-none">
+            <defs>
+              {maskBlobs.map((blob) => (
+                <clipPath
+                  key={blob.id}
+                  id={blob.id}
+                  clipPathUnits="objectBoundingBox"
+                >
+                  <path d={blob.path} transform={blob.transform} />
+                </clipPath>
+              ))}
+            </defs>
+          </svg>
+
+          {!selectedImage ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/30 transition-colors"
+            >
+              <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Upload className="w-8 h-8 text-zinc-500" />
+              </div>
+              <h3 className="text-zinc-400 font-medium">Drop source image</h3>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+          ) : (
+            <div
+              className="relative max-w-full max-h-full shadow-2xl"
+              style={{ aspectRatio: imgAspectRatio ? imgAspectRatio : "auto" }}
+            >
+              {/* 1. Base Image Layer */}
+              <img
+                src={(resultImage && showingResult) ? resultImage : selectedImage}
+                alt={(resultImage && showingResult) ? "Result" : "Source"}
+                className="w-full h-full object-contain block"
+                onLoad={(e) =>
+                  setImgAspectRatio(
+                    e.currentTarget.naturalWidth / e.currentTarget.naturalHeight
+                  )
+                }
+              />
+              
+              {/* Result indicator badge */}
+              {resultImage && showingResult && (
+                <div className="absolute top-2 left-2 px-3 py-1 bg-green-500/90 text-white text-xs font-bold rounded-full backdrop-blur-sm z-30">
+                  ✓ RESULT
+                </div>
+              )}
+              
+              {/* Original indicator badge */}
+              {resultImage && !showingResult && (
+                <div className="absolute top-2 left-2 px-3 py-1 bg-zinc-600/90 text-white text-xs font-bold rounded-full backdrop-blur-sm z-30">
+                  ORIGINAL
+                </div>
+              )}
+
+              {/* UPLOADED MASK OVERLAY (when no action selected) */}
+              {selectedMask && !selectedAction && (
+                <div className="absolute inset-0 z-10 mix-blend-multiply pointer-events-none">
+                  <img
+                    src={selectedMask}
+                    alt="Mask"
+                    className="w-full h-full object-contain opacity-60"
+                  />
+                </div>
+              )}
+
+              {/* ACTION LAYERS */}
+
+              {/* MOVE ACTION: Independent Blobs */}
+              {selectedAction === "move" &&
+                maskBlobs.map((blob) => (
+                  <React.Fragment key={blob.id}>
+                    {/* The "Hole" for this specific blob - Fixed Position */}
+                    <div
+                      className="absolute inset-0 bg-black/80 pointer-events-none"
+                      style={{ clipPath: `url(#${blob.id})` }}
+                    />
+
+                    {/* The "Subject" for this specific blob - Draggable */}
+                    <div
+                      onMouseDown={(e) => handleMouseDown(e, blob.id)}
+                      className={`absolute inset-0 cursor-move z-10 transition-transform duration-75 hover:z-20`}
+                      style={{
+                        transform: `translate(${blob.offset.x}px, ${blob.offset.y}px)`,
+                        clipPath: `url(#${blob.id})`,
+                        zIndex: draggingBlobId === blob.id ? 30 : 10,
+                      }}
+                    >
+                      {/* Image Content */}
+                      <img
+                        src={selectedImage}
+                        alt="Subject"
+                        className="w-full h-full object-contain block pointer-events-none"
+                      />
+
+                      {/* Hover/Drag Highlight */}
+                      <div
+                        className={`absolute inset-0 transition-all pointer-events-none border-2
+                                    ${
+                                      draggingBlobId === blob.id
+                                        ? "bg-emerald-500/0 border-emerald-500"
+                                        : "bg-emerald-500/10 hover:bg-emerald-500/0 border-emerald-500/30"
+                                    }`}
+                      />
+
+                      {draggingBlobId !== blob.id && (
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+                          <Move className="w-8 h-8 text-white drop-shadow-lg" />
+                        </div>
+                      )}
+                    </div>
+                  </React.Fragment>
+                ))}
+
+              {/* INPAINT ACTION: Show uploaded mask or simulated blobs */}
+              {selectedAction === "inpaint" && (
+                <>
+                  {selectedMask ? (
+                    <div className="absolute inset-0 z-10">
+                      <img
+                        src={selectedMask}
+                        alt="Mask"
+                        className="w-full h-full object-contain opacity-50 mix-blend-screen animate-pulse"
+                        style={{ filter: "hue-rotate(200deg) saturate(3)" }}
+                      />
+                    </div>
+                  ) : (
+                    maskBlobs.map((blob) => (
+                      <div
+                        key={blob.id}
+                        className="absolute inset-0 z-10 bg-blue-500/40 backdrop-blur-[1px] border border-blue-400/30 animate-pulse"
+                        style={{ clipPath: `url(#${blob.id})` }}
+                      />
+                    ))
+                  )}
+                </>
+              )}
+
+              {/* ERASE ACTION: Show uploaded mask or simulated blobs */}
+              {selectedAction === "erase" && (
+                <>
+                  {selectedMask ? (
+                    <div className="absolute inset-0 z-10">
+                      <img
+                        src={selectedMask}
+                        alt="Mask"
+                        className="w-full h-full object-contain opacity-50 mix-blend-screen animate-pulse"
+                        style={{ filter: "hue-rotate(0deg) saturate(3)" }}
+                      />
+                    </div>
+                  ) : (
+                    maskBlobs.map((blob) => (
+                      <div
+                        key={blob.id}
+                        className="absolute inset-0 z-10 bg-red-500/40 backdrop-blur-[1px] border border-red-400/30 animate-pulse"
+              {/* Standard Controls */}
+              <div className="absolute top-2 right-2 flex gap-2 z-30">
+                {resultImage && (
+                  <button
+                    onClick={() => setShowingResult(!showingResult)}
+                    className="px-3 py-2 bg-zinc-700/90 hover:bg-zinc-600 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-all"
+                  >
+                    {showingResult ? "View Original" : "View Result"}
+                  </button>
+                )}
+                {!selectedMask && maskingStatus !== "processing" && !resultImage && (
+                  )}
+                </>
+              )}
+
+              {/* Standard Controls */}
+              <div className="absolute top-2 right-2 flex gap-2 z-30">
+                {!selectedMask && maskingStatus !== "processing" && (
+                  <>
+                    <button
+                      onClick={() => maskInputRef.current?.click()}
+                      className="px-3 py-2 bg-blue-500/80 hover:bg-blue-500 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-all"
+                    >
+                      Upload Mask
+                    </button>
+                    <button
+                      onClick={simulateMasking}
+                      className="px-3 py-2 bg-purple-500/80 hover:bg-purple-500 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-all"
+                    >
+                      Simulate Mask
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={clearImage}
+                  className="p-2 bg-black/50 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-lg backdrop-blur-sm transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <input
+                type="file"
+                ref={maskInputRef}
+                onChange={handleMaskChange}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {maskingStatus === "processing" && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="text-blue-400 font-mono text-sm animate-pulse">
+                      Detecting Objects...
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* System Metrics Chart */}
+        <div className="h-48 shrink-0">
+          <SystemUsageChart />
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN: Controls + Workflow */}
+      <div className="w-[400px] shrink-0 flex flex-col gap-6">
+        {/* Workflow Graph Panel */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 flex flex-col items-center h-[460px]">
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-6 w-full text-center">
+            Operation Pipeline
+          </h3>
+          <WorkflowGraph
+            hasImage={!!selectedImage}
+            maskingStatus={maskingStatus}
+            onAction={handleActionClick}
+            onConfirm={confirmAction}
+            isProcessingAction={isProcessingAction}
+            selectedAction={selectedAction}
+          />
+        </div>
+
+        {/* Console / Output Log */}
+        <div className="flex-1 bg-black border border-zinc-800 rounded-xl p-4 font-mono text-xs overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 text-zinc-500 mb-3 pb-2 border-b border-zinc-900">
+            <Terminal className="w-3 h-3" />
+            <span className="uppercase tracking-wider">System Log</span>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-2 pr-2 text-zinc-400 scrollbar-thin">
+            {logs.length === 0 ? (
+              <span className="text-zinc-700 italic">Waiting for input...</span>
+            ) : (
+              logs.map((log, i) => (
+                <div key={i} className="break-words">
+                  <span className="opacity-50 mr-2">{">"}</span>
+                  {log}
+                </div>
+              ))
+            )}
+            <div ref={logsEndRef} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ImageAnalyzer;

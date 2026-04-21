@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  erase:
+    build:
+      context: ./erase
+      dockerfile: Dockerfile
+    container_name: erase_service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./erase/data:/app/data
+      - ./shared_data:/shared_data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+
+  inpaint:
+    build:
+      context: ./fluxquantinpaint
+      dockerfile: Dockerfile
+    container_name: inpaint_service
+    ports:
+      - "8002:8007"
+    volumes:
+      - ./inpaint/output:/app/output
+      - ./shared_data:/shared_data
+      - huggingface_cache:/app/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+     
+
+
+  move_seg:
+    build:
+      context: ./move+seg
+      dockerfile: Dockerfile
+    container_name: move_seg_service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./move+seg/output:/app/output
+      - ./move+seg/data:/app/data
+      - ./move+seg/models:/app/models
+      - ./shared_data:/shared_data
+      - huggingface_cache:/app/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+      
+volumes:
+  huggingface_cache:
