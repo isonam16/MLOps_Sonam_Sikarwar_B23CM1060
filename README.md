@@ -63,10 +63,8 @@ Screenshots of both app pages are in `question2/screenshots/`:
 
 | Page | File |
 |------|------|
-| Page 1 – Training Metrics Dashboard | `question2/screenshots/page1_1.png` |
-| Page 1 – Test Scores | `question2/screenshots/page1_2.png` |
-| Page 2 – Segmentation Demo (inputs + masks) | `question2/screenshots/page2_1.png` |
-| Page 2 – Predicted Masks | `question2/screenshots/page2_2.png` |
+| Page 1 – Training Metrics Dashboard | `question2/screenshots/page1_1.png` and `question2/screenshots/page1_2.png` |
+| Page 2 – Segmentation Demo (inputs + masks + predicted masks ) | `question2/screenshots/page2_1.png` and  `question2/screenshots/page2_2.png` |
 
 ### App Features
 - **Page 1:** Displays training loss, mIOU, and mDice plots along with final test set scores.
