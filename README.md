@@ -76,7 +76,7 @@ Screenshots of both app pages are in `question2/screenshots/`:
 
 ##  Assumptions
 
-* Due to **limited computational resources and disk constraints**, only a **subset of the dataset** was used:
+* Due to limited computational resources and disk constraints, only a subset of the dataset was used:
 
   * Validation: 10% (used for QAT finetuning)
   * Test: 10% (used for evaluation)
