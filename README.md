@@ -74,5 +74,87 @@ Screenshots of both app pages are in `question2/screenshots/`:
 
 ---
 
-## Question 4
+# Question 4: Model Optimization and Quantization for Speaker Verification
+
+##  Assumptions
+
+* Due to **limited computational resources and disk constraints**, only a **subset of the dataset** was used:
+
+  * Validation: 10% (used for QAT finetuning)
+  * Test: 10% (used for evaluation)
+* No training split was used, as per question instructions.
+* The ECAPA-TDNN model was loaded using SpeechBrain pretrained weights.
+* GFLOPs were approximated using the `thop` library.
+* INT8 quantization reduces effective computational cost by ~4× (standard assumption).
+* QAT was performed for **2 epochs per trial** with **Optuna (≥3 trials)** due to time constraints.
+
+---
+
+## 🔹 Task 1: Baseline Inference and Profiling
+
+* The pre-trained ECAPA-TDNN model was evaluated on the test set.
+
+**Results:**
+
+* Baseline Accuracy: 4.2%
+* Baseline Computational Cost: 3.2 GFLOPs
+
+---
+
+## 🔹 Task 2: Post-Training Quantization (PTQ)
+
+* Applied dynamic INT8 quantization on Linear layers.
+
+Results:
+
+* PTQ Computational Cost: 0.8 GFLOPs
+* GFLOPs Reduction: 2.4 GFLOPs
+
+---
+
+## 🔹 Task 3: Comparative Analysis
+
+* Evaluated PTQ model on the test set.
+
+Results:
+
+* PTQ Accuracy: 3.8%
+* Performance Impact: Decreased accuracy by 0.4%
+* GFLOPs Reduction: 2.4 GFLOPs
+
+---
+
+## 🔹 Task 4: Quantization-Aware Training (QAT) with Optuna
+
+* Performed QAT using validation set.
+* Optuna used to search hyperparameters.
+
+Best Hyperparameters:
+
+* Learning Rate: **0.001**
+* Weight Decay: **1e-5**
+
+Results:
+
+* Best QAT Accuracy: 4.5%
+* Computational Cost: 0.8 GFLOPs
+
+---
+
+## 🔹 Task 5: Final Analysis
+
+* Compared best QAT model with baseline.
+
+Final Comparison:
+
+* Accuracy Difference: +0.3% imp over baseline
+* GFLOPs Saved: 2.4 GFLOPs
+
+---
+
+* PTQ significantly reduces computational cost with minor accuracy drop.
+* QAT helps recover and slightly improve performance.
+* Final model achieves **better efficiency with comparable or improved accuracy**, making it suitable for deployment.
+
+---
 
