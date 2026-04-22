@@ -74,5 +74,5 @@ Screenshots of both app pages are in `question2/screenshots/`:
 
 ---
 
-## Question 3 / Question 4
+## Question 4
 
